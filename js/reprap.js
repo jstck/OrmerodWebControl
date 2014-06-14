@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.90; //App version
+var ver = 0.91; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
@@ -13,6 +13,7 @@ var maxDataPoints = 200;
 var chartData = [[], []];
 var maxLayerBars = 100;
 var layerData = [];
+var filamentData = [];
 var bedColour = "#454BFF"; //blue
 var headColour = "#FC2D2D"; //red
 
@@ -251,15 +252,14 @@ $('div#panicBtn button').on('click', function() {
             break;
         case "reset":
             //reset printing after pause
-            gFileData = "";
-			gFileIndex = 0;
             printing = false;
             paused = false;
             btnVal = "M1";
             //switch off heaters
             $.askElle('gcode', "M140 S0"); //bed off
-            $.askElle('gcode', "G10 P1 S0\nT1"); //head 0 off
+            $.askElle('gcode', "G10 P1 S0\nT1"); //head 1 off
             resetLayerData(0, 0);
+			//no break
         case "M24":
             //resume
             paused = false;
@@ -925,61 +925,53 @@ function updatePage() {
     }
 }
 
-function estEndTime() {
-    var firstLayer = 2;
-    if (($('div#settings input#ignoreFirst').is(':checked'))) {
-        firstLayer = 2;
-    }
-    var d = new Date();
-    var utime = d.getTime();
-    var layerLeft = layerCount - currentLayer;
-    if (layerData.length > firstLayer && layerCount > 0) {
-        var lastLayer = layerData[layerData.length - 1] - layerData[layerData.length - 2];
-        var llTimeR = new Date(utime + (lastLayer * layerLeft));
-        $('span#llTimeR').text((lastLayer * layerLeft).toHHMMSS()); 
-        $('span#llTime').text(llTimeR.toLocaleTimeString()); 
+function getFilamentUsed() {
+	if (currentFilamentPos - startingFilamentPos < objUsedFilament - 6) {
+		//gone backwards by more than 6mm so probably just done a G30 E0 to reset the filament origin
+		startingFilamentPos = currentFilamentPos - objUsedFilament;
+	}
+	return currentFilamentPos - startingFilamentPos;
+}
 
-        //average all layers 
-        var t=0;
-        for (var i = firstLayer; i <= (layerData.length-1) ;i++ ) {
-            t += layerData[i] - layerData[i-1];
-        }
-        var avgAll = t / layerData.length-firstLayer;
-        var avgAllR = new Date(utime + (avgAll * layerLeft));
-        $('span#avgAllR').text((avgAll * layerLeft).toHHMMSS()); 
-        $('span#avgAll').text(avgAllR.toLocaleTimeString()); 
-        
-        if (layerData.length > (5 + firstLayer)) {
-            //avg last 5 layers
-            t=0;
-            for (var i = firstLayer; i <= (4+firstLayer) ;i++ ) {
-                t += layerData[layerData.length - i] - layerData[layerData.length - i-1] ;
-            }
-            var avg5 = t / 5;
-            var avg5R = new Date(utime + (avg5 * layerLeft));
-            $('span#avg5R').text((avg5 * layerLeft).toHHMMSS()); 
-            $('span#avg5').text(avg5R.toLocaleTimeString()); 
-        }
+function estEndTime() {
+    var utime = (new Date()).getTime();
+    if (layerData.length >= 2 && layerCount > 0) {
+		var layerLeft = layerCount - currentLayer;
+		// average over the last 5 layers, or all layers if less
+        var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+        var avg5 = (layerData[layerData.length - 1] - layerData[startAt])/(layerData.length - startAt);
+        var avg5R = new Date(utime + (avg5 * layerLeft));
+        $('span#avg5R').text((avg5 * layerLeft).toHHMMSS()); 
+        $('span#avg5').text(avg5R.toLocaleTimeString()); 
 	}	
-	if (objTotalFilament > 0)
-	{
-		if (currentFilamentPos - startingFilamentPos < objUsedFilament - 10) {
-			//probably just done a G30 E0 to reset the filament origin
-			startingFilamentPos = currentFilamentPos - objUsedFilament;
-		}
-		objUsedFilament = currentFilamentPos - startingFilamentPos;
-		if (objUsedFilament <= objTotalFilament && objUsedFilament > objTotalFilament * 0.03) {	//if at least 3% filament consumed
-			var timeSoFar = utime - printStartTime;
-			var timeLeft = timeSoFar * (objTotalFilament - objUsedFilament)/objUsedFilament;
-			var estEndTimeFil = new Date(utime + timeLeft);
-			$('span#filTimeR').text(timeLeft.toHHMMSS());
-			$('span#filTime').text(estEndTimeFil.toLocaleTimeString());
+	if (objTotalFilament > 0) {
+		objUsedFilament = getFilamentUsed();
+		if (objUsedFilament <= objTotalFilament) {
+			var filamentLeft = objTotalFilament - objUsedFilament;
+			if (filamentData.length >= 2 && layerCount > 0) {
+				var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+				filamentRate = (filamentData[filamentData.length - 1] - filamentData[startAt])/(layerData[filamentData.length - 1] - layerData[startAt]);
+				if (filamentRate != 0) {
+					var timeLeft = filamentLeft/filamentRate;
+					var estEndTimeFil = new Date(utime + timeLeft);
+					$('span#filTimeR').text(timeLeft.toHHMMSS());
+					$('span#filTime').text(estEndTimeFil.toLocaleTimeString());
+				}
+			} else if (objUsedFilament > objTotalFilament * 0.03) {	//if at least 3% filament consumed
+				var timeSoFar = utime - printStartTime;
+				var timeLeft = timeSoFar * filamentLeft/objUsedFilament;
+				var estEndTimeFil = new Date(utime + timeLeft);
+				$('span#filTimeR').text(timeLeft.toHHMMSS());
+				$('span#filTime').text(estEndTimeFil.toLocaleTimeString());
+			}
 		}
 	}
 }
 
 function whichLayer(currZ) {
-    if(!layerHeight) layerHeight = storage.get('settings','layerHeight');
+    if (!layerHeight) {
+		layerHeight = storage.get('settings','layerHeight');
+	}
     var n = Math.round(currZ / layerHeight);
     if (n === currentLayer + 1 && currentLayer) {
         layerChange();
@@ -999,6 +991,7 @@ function resetLayerData(h, f) {
 	startingFilamentPos = currentFilamentPos;
 	objUsedFilament = 0;
     layerData = [];
+	filamentData = [];
     printStartTime = null;
     setProgress(0, 'print', 0, 0);
     $('span#elapsed, span#lastlayer, table#finish span').text("00:00:00");
@@ -1008,12 +1001,12 @@ function resetLayerData(h, f) {
 }
 
 function layerChange() {
-    var d = new Date();
-    var utime = d.getTime();
+    var utime = (new Date()).getTime();
     layerData.push(utime);
+	filamentData.push(getFilamentUsed());
     if (printStartTime && layerData.length > 1) {
-        var lastLayerEnd = layerData[layerData.length - 2];
-        $('span#lastlayer').text((utime - lastLayerEnd).toHHMMSS());
+        var lastLayerStart = layerData[layerData.length - 2];
+        $('span#lastlayer').text((utime - lastLayerStart).toHHMMSS());
         chart2.setData(parseLayerData());
         chart2.setupGrid();
         chart2.draw();
@@ -1024,8 +1017,7 @@ function layerChange() {
 }
 
 function layers(layer) {
-    var d = new Date();
-    var utime = d.getTime();
+    var utime = (new Date()).getTime();
     if ((layer === 1 || layer == 2) && !printStartTime) {
         printStartTime = utime;
         layerData.push(utime);
@@ -1084,11 +1076,11 @@ function parseChartData() {
 }
 
 function timer() {
-    var d = new Date();
+    var utime = (new Date()).getTime();
     if (!timerStart) {
-        timerStart = d.getTime();
+        timerStart = utime;
     } else {
-        var elapsed = d.getTime() - timerStart;
+        var elapsed = utime - timerStart;
         timerStart = null;
         return elapsed;
     }

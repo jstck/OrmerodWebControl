@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Ormerod Control v0.90</title>
+<title>Ormerod Control v0.91</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
@@ -66,8 +66,7 @@ data-toggle="dropdown">
 </div>
 <div class="col-md-1">
 <form class="navbar-form navbar-right">
-<button type="button" id="printing" class="btn btn-danger active disabled" 
-value="0">Inactive</button>
+<button type="button" id="printing" class="btn btn-danger active disabled" value="0">Inactive</button>
 </form>
 </div>
 </div><!-- /.navbar-collapse -->
@@ -77,14 +76,11 @@ value="0">Inactive</button>
 <div class="row"> 
 <!-- panic buttions -->
 <div class="col-md-1">
-<button type="button" id="connect" class="btn btn-danger disabled" 
-value="0">Connect</button>   
+<button type="button" id="connect" class="btn btn-danger disabled" value="0">Connect</button>   
 <div id="panicBtn" style="margin-top: 5px">
-<button type="button" value='M112' id='stop' 
+<button type="button" value='M112' id='stop'
 class="btn btn-danger btn-block disabled" 
-title="M112, moves in progress are immediately terminated,
-shuts down, motors/heaters turned off.
-Requires reset button on duet to restart">STOP!</button>
+title="M112, moves in progress are immediately terminated, shuts down, motors/heaters turned off. Requires reset button on duet to restart">STOP!</button>
 <button type="button" value='M25' id='pause' 
 class="btn btn-info btn-block disabled" 
 title='Pause printing, Resumeable'>Pause</button>
@@ -357,21 +353,15 @@ title="Move X & Y to Bed Centre">G1 X100 Y100 F6000</a>
 </tr>
 <tr>
 <td>Based On</td>
-<td>Last Layer</td>
-<td>Avg. All Layers</td>
-<td>Avg. Last 5 Layers</td>
+<td>Layer time</td>
 <td>Filament usage</td>
 </tr>
 <tr>
 <td>Est. Time Left</td>
-<td><span id="llTimeR">00:00:00</span></td>
-<td><span id="avgAllR">00:00:00</span></td>
 <td><span id="avg5R">00:00:00</span></td>
 <td><span id="filTimeR">00:00:00</span></td></tr>
 <tr>
 <td>Est. End Time</td>
-<td><span id="llTime">00:00:00</span></td>
-<td><span id="avgAll">00:00:00</span></td>
 <td><span id="avg5">00:00:00</span></td>
 <td><span id="filTime">00:00:00</span></td>
 </tr>                                         
