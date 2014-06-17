@@ -110,7 +110,7 @@ $(document).ready(function() {
     if (htmVer < ver) {
         //pop message
         modalMessage("Update! v"+ver+" is Available",
-			"The version of reprap.htm on you Duet SD card is "+getHTMLver()+", the latest version is "+ver
+			"The version of reprap.htm on your Duet SD card is "+getHTMLver()+", the latest version is "+ver
 			+", to ensure compatibility and with the latest javascript code, new features, and correct functionality it is highly recommended that you upgrade. The newest reprap.htm can be found at <a href='https://github.com/dc42/OrmerodWebControl'>https://github.com/dc42/OrmerodWebControl</a>",
 			true);
     }
