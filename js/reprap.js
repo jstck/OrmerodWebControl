@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.91; //App version
+var ver = 0.92; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
@@ -1004,6 +1004,10 @@ function layerChange() {
     var utime = (new Date()).getTime();
     layerData.push(utime);
 	filamentData.push(getFilamentUsed());
+    if (layerData.length > maxLayerBars) {
+        layerData.shift();
+		filamentData.shift();
+	}
     if (printStartTime && layerData.length > 1) {
         var lastLayerStart = layerData[layerData.length - 2];
         $('span#lastlayer').text((utime - lastLayerStart).toHHMMSS());
@@ -1050,8 +1054,6 @@ function setProgress(percent, bar, layer, layers) {
 }
 
 function parseLayerData() {
-    if (layerData.length > maxLayerBars)
-        layerData.shift();
     var res = [];
     //res.push([0,0]);
     var elapsed;
