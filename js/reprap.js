@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.93; //App version
+var ver = 0.94; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
@@ -62,7 +62,7 @@ $(document).ready(function() {
     moveVals(['X','Y','Z']);
 
     ormerodIP = location.host;
-    $('#hostLocation').text(ormerodIP);
+    $('span#hostLocation').text(ormerodIP);
 
     if ($.support.fileDrop) {
         fileDrop();
