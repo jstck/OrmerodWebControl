@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.92; //App version
+var ver = 0.93; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
@@ -935,10 +935,10 @@ function getFilamentUsed() {
 
 function estEndTime() {
     var utime = (new Date()).getTime();
-    if (layerData.length >= 2 && layerCount > 0) {
+    if (layerData.length >= 3 && layerCount > 0) {
 		var layerLeft = layerCount - currentLayer;
 		// average over the last 5 layers, or all layers if less
-        var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+        var startAt = (layerData.length > 6) ? layerData.length - 5 : 1;
         var avg5 = (layerData[layerData.length - 1] - layerData[startAt])/(layerData.length - startAt);
         var avg5R = new Date(utime + (avg5 * layerLeft));
         $('span#avg5R').text((avg5 * layerLeft).toHHMMSS()); 
@@ -948,8 +948,8 @@ function estEndTime() {
 		objUsedFilament = getFilamentUsed();
 		if (objUsedFilament <= objTotalFilament) {
 			var filamentLeft = objTotalFilament - objUsedFilament;
-			if (filamentData.length >= 2 && layerCount > 0) {
-				var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+			if (filamentData.length >= 3 && layerCount > 0) {
+				var startAt = (layerData.length > 6) ? layerData.length - 5 : 1;
 				filamentRate = (filamentData[filamentData.length - 1] - filamentData[startAt])/(layerData[filamentData.length - 1] - layerData[startAt]);
 				if (filamentRate != 0) {
 					var timeLeft = filamentLeft/filamentRate;
@@ -1022,9 +1022,10 @@ function layerChange() {
 
 function layers(layer) {
     var utime = (new Date()).getTime();
-    if ((layer === 1 || layer == 2) && !printStartTime) {
+    if ((layer === 1 || layer === 2) && !printStartTime) {
         printStartTime = utime;
         layerData.push(utime);
+		filamentData.push(startingFilamentPos);
     }
     if (printStartTime) {
         $('span#elapsed').text((utime - printStartTime).toHHMMSS());
