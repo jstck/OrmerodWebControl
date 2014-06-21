@@ -128,7 +128,7 @@ $('#connect').on('click', function() {
         listGFiles();
         $.askElle("gcode", "M115"); //get firmware
 		var resp = $.askElle("name");
-		if (resp.hasOwnProperty('myName') && resp.myName.length != 0) {
+		if (resp !== undefined && resp.hasOwnProperty('myName') && resp.myName.length != 0) {
 			$('span#machineName').text(resp.myName);
 		}
         poll();
