@@ -1,12 +1,13 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Ormerod Control v0.94</title>
+<title>Ormerod Control v0.95</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
 <link href="css/bootstrap.min.css" type="text/css" rel="stylesheet" />
 <link href="css/main.css" type="text/css" rel="stylesheet" />
+<link href="css/bootstrap-slider.min.css" type="text/css" rel="stylesheet" />
 <link href="favicon.ico" type="image/x-icon" rel="icon" />        
 <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elmnts and media queries -->
 <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -175,6 +176,7 @@ title='Pause before reset'>Reset</button>
 </ul>
 <!-- Tab panes -->
 <div class="tab-content">
+<!-- Control pane -->
 <div class="tab-pane active" id="control">
 <br />
 <div class="col-md-8">
@@ -307,13 +309,14 @@ title="Move X & Y to Bed Centre">G1 X100 Y100 F6000</a>
 </table>
 </div>
 </div>
+<!-- Print status pane -->
 <div class="tab-pane" id="printview">
 <br />
 <div class="col-md-10 col-md-offset-1" style="margin-bottom:20px">
 <span id="gFileDisplay"></span> <span id="printProgressText" class="pull-right"></span>
 <progress id="printProgressBar" style="width:100%; display:none" value="0" max="100"></progress>
 </div>
-<div class="col-md-2 col-md-offset-1">
+<div class="col-md-2">
 <table class="table table-bordered" id="slic3r">
 <tbody>
 </tbody>
@@ -365,10 +368,31 @@ title="Move X & Y to Bed Centre">G1 X100 Y100 F6000</a>
 </tbody>
 </table>  
 </div>
+<div class="col-md-2">
+<table class="table table-bordered" id="printControl">
+<tbody>
+<tr>
+<th colspan="2" class="text-center">Print Control</th>
+</tr>
+<tr>
+<td width="50%">Speed</td>
+<td width="50%">Extrusion</td>
+</tr>
+<tr>
+<td><input id="sFactor" type="text"></td>
+<td><input id="eFactor" type="text"></td>
+</tr>
+<tr>
+<td><span id="sPercent">100</span>%</td>
+<td><span id="ePercent">100</span>%</td>
+</tr>
+</table>
 </div>
+</div>
+<!-- SD gcode files pane -->
 <div class="tab-pane" id="gcodefiles">
 <br />
-<div class="col-md-10 col-md-offset-1">
+<div class="col-md-10">
 <!-- Gfiles list -->
 <div class="panel panel-default">
 <div class="panel-body">
@@ -560,6 +584,7 @@ Save changes</button>
 <script src="js/jquery.flot.min.js"></script>
 <script src="js/jquery.flot.navigate.js"></script>
 <script src="js/jquery.filedrop.min.js"></script>
+<script src="js/bootstrap-slider.js"></script>
 <script src="js/reprap.js"></script>
 </body>
 </html>

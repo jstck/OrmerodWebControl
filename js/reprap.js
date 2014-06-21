@@ -1,10 +1,12 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.94; //App version
+var ver = 0.95; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
 var chart,chart2,ormerodIP,layerCount,currentLayer,objHeight,objTotalFilament,startingFilamentPos,objUsedFilament,printStartTime,gFilename,ubuff,currentFilamentPos,timerStart,storage,layerHeight,lastUpdatedTime;
+var sFactor = 100;
+var eFactor = 100;
 var maxUploadBuffer = 2000;
 var messageSeqId = 0;
 
@@ -276,6 +278,18 @@ $('div#panicBtn button').on('click', function() {
             break;
     }
     $.askElle('gcode', btnVal);
+});
+
+//sliders
+$('#sFactor').slider({orientation:'vertical', reversed:true, min:10, max:300, step:10, value:100, tooltip:'show'});
+$('#eFactor').slider({orientation:'vertical', reversed:true, min:80, max:120, step:1, value:100, tooltip:'show'});
+$("#sFactor").on('slide', function(slideEvt) {
+	sFactor = slideEvt.value;
+	$("span#sPercent").text(sFactor);
+});
+$("#eFactor").on('slide', function(slideEvt) {
+	eFactor = slideEvt.value;
+	$("span#ePercent").text(eFactor);
 });
 
 //g files
