@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.91; //App version
+var ver = 0.94; //App version
 var polling = false;
 var printing = false;
 var paused = false;
@@ -76,7 +76,7 @@ $(document).ready(function() {
     moveVals(['X','Y','Z']);
 
     ormerodIP = location.host;
-    $('#hostLocation').text(ormerodIP);
+    $('span#hostLocation').text(ormerodIP);
 
     if ($.support.fileDrop) {
         fileDrop();
@@ -127,7 +127,7 @@ $(document).ready(function() {
     if (htmVer < ver) {
         //pop message
         modalMessage("Update! v"+ver+" is Available",
-			"The version of reprap.htm on you Duet SD card is "+getHTMLver()+", the latest version is "+ver
+			"The version of reprap.htm on your Duet SD card is "+getHTMLver()+", the latest version is "+ver
 			+", to ensure compatibility and with the latest javascript code, new features, and correct functionality it is highly recommended that you upgrade. The newest reprap.htm can be found at <a href='https://github.com/dc42/OrmerodWebControl'>https://github.com/dc42/OrmerodWebControl</a>",
 			true);
     }
@@ -952,10 +952,10 @@ function getFilamentUsed() {
 
 function estEndTime() {
     var utime = (new Date()).getTime();
-    if (layerData.length >= 2 && layerCount > 0) {
+    if (layerData.length >= 3 && layerCount > 0) {
 		var layerLeft = layerCount - currentLayer;
 		// average over the last 5 layers, or all layers if less
-        var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+        var startAt = (layerData.length > 6) ? layerData.length - 5 : 1;
         var avg5 = (layerData[layerData.length - 1] - layerData[startAt])/(layerData.length - startAt);
         var avg5R = new Date(utime + (avg5 * layerLeft));
         $('span#avg5R').text((avg5 * layerLeft).toHHMMSS());
@@ -965,8 +965,8 @@ function estEndTime() {
 		objUsedFilament = getFilamentUsed();
 		if (objUsedFilament <= objTotalFilament) {
 			var filamentLeft = objTotalFilament - objUsedFilament;
-			if (filamentData.length >= 2 && layerCount > 0) {
-				var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
+			if (filamentData.length >= 3 && layerCount > 0) {
+				var startAt = (layerData.length > 6) ? layerData.length - 5 : 1;
 				filamentRate = (filamentData[filamentData.length - 1] - filamentData[startAt])/(layerData[filamentData.length - 1] - layerData[startAt]);
 				if (filamentRate != 0) {
 					var timeLeft = filamentLeft/filamentRate;
@@ -1021,6 +1021,10 @@ function layerChange() {
     var utime = (new Date()).getTime();
     layerData.push(utime);
 	filamentData.push(getFilamentUsed());
+    if (layerData.length > maxLayerBars) {
+        layerData.shift();
+		filamentData.shift();
+	}
     if (printStartTime && layerData.length > 1) {
         var lastLayerStart = layerData[layerData.length - 2];
         $('span#lastlayer').text((utime - lastLayerStart).toHHMMSS());
@@ -1035,9 +1039,10 @@ function layerChange() {
 
 function layers(layer) {
     var utime = (new Date()).getTime();
-    if ((layer === 1 || layer == 2) && !printStartTime) {
+    if ((layer === 1 || layer === 2) && !printStartTime) {
         printStartTime = utime;
         layerData.push(utime);
+		filamentData.push(startingFilamentPos);
     }
     if (printStartTime) {
         $('span#elapsed').text((utime - printStartTime).toHHMMSS());
@@ -1067,8 +1072,6 @@ function setProgress(percent, bar, layer, layers) {
 }
 
 function parseLayerData() {
-    if (layerData.length > maxLayerBars)
-        layerData.shift();
     var res = [];
     //res.push([0,0]);
     var elapsed;
