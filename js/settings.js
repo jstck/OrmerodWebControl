@@ -1,5 +1,5 @@
 //Quick command buttons added to the row on the bottom of the control screen
-var quickcommands=[
+var quickCommands = [
   {
     "title": "Turn on ATX power supply",
     "name": "Power on",
