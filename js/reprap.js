@@ -283,6 +283,7 @@ $('div#panicBtn button').on('click', function() {
 //sliders
 $('#sFactor').slider({orientation:'vertical', reversed:true, min:10, max:300, step:10, value:100, tooltip:'show'});
 $('#eFactor').slider({orientation:'vertical', reversed:true, min:80, max:120, step:1, value:100, tooltip:'show'});
+
 $("#sFactor").on('slide', function(slideEvt) {
 	sFactor = slideEvt.value;
 	$("span#sPercent").text(sFactor);
@@ -290,6 +291,17 @@ $("#sFactor").on('slide', function(slideEvt) {
 $("#eFactor").on('slide', function(slideEvt) {
 	eFactor = slideEvt.value;
 	$("span#ePercent").text(eFactor);
+});
+
+$("#sFactor").on('slideStop', function(slideEvt) {
+	sFactor = slideEvt.value;
+	$("span#sPercent").text(sFactor);
+	$.askElle('gcode', "M220 S"+sFactor);
+});
+$("#eFactor").on('slideStop', function(slideEvt) {
+	eFactor = slideEvt.value;
+	$("span#ePercent").text(eFactor);
+	$.askElle('gcode', "M221 S"+eFactor);
 });
 
 //g files
