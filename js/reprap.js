@@ -1,7 +1,7 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
 var ver = 0.91; //App version
-var polling = false; 
+var polling = false;
 var printing = false;
 var paused = false;
 var chart,chart2,ormerodIP,layerCount,currentLayer,objHeight,objTotalFilament,startingFilamentPos,objUsedFilament,printStartTime,gFilename,ubuff,currentFilamentPos,timerStart,storage,layerHeight,lastUpdatedTime;
@@ -27,6 +27,20 @@ var chevRight = "<span class='glyphicon glyphicon-chevron-right'></span>";
 var gcodeDir = "gcodes/";
 var webDir = "www/";
 var sysDir = "sys/";
+
+//Default values for various values that can be overridden in settings.js
+var quickCommands = [];
+
+//Temperature presets for bed and head temp. If defined, will override cookies
+var tempPresets = {
+//  "bed": [120,65,0],
+//  "head": [245,185,0]
+}
+
+//Values for the feed rates
+var feedRates = [60,120,240];
+var feedLengths = [1,5,10,50,100];
+
 
 jQuery.extend({
     askElle: function(reqType, code) {
@@ -58,7 +72,7 @@ $(document).ready(function() {
     storage=$.localStorage;
     getCookies();
     loadSettings();
-    
+
     moveVals(['X','Y','Z']);
 
     ormerodIP = location.host;
@@ -101,9 +115,12 @@ $(document).ready(function() {
         pan: {interactive: true}
     });
 
+    //Apply things from user settings
+    user_settings();
+
     message('success', 'Page Load Complete');
     $('button#connect, button#printing').removeClass('disabled');
-    
+
     var htmVer = getHTMLver();
     $('p#htmVer').text(htmVer);
     $('p#jsVer').text(ver);
@@ -114,7 +131,7 @@ $(document).ready(function() {
 			+", to ensure compatibility and with the latest javascript code, new features, and correct functionality it is highly recommended that you upgrade. The newest reprap.htm can be found at <a href='https://github.com/dc42/OrmerodWebControl'>https://github.com/dc42/OrmerodWebControl</a>",
 			true);
     }
-    
+
 });
 
 $('#connect').on('click', function() {
@@ -124,7 +141,7 @@ $('#connect').on('click', function() {
     } else {
         polling = true;
 		$.askElle("connect");
-        updatePage();        
+        updatePage();
         listGFiles();
         $.askElle("gcode", "M115"); //get firmware
 		var resp = $.askElle("name");
@@ -136,7 +153,7 @@ $('#connect').on('click', function() {
 });
 
 //temp controls
-$('div#bedTemperature button#setBedTemp').on('click', function() { 
+$('div#bedTemperature button#setBedTemp').on('click', function() {
     $.askElle('gcode', "M140 S" + $('input#bedTempInput').val());
 });
 $('div#bedTemperature').on('click', 'a#bedTempLink', function() {
@@ -198,7 +215,7 @@ $('div#feed button#feed').on('click', function() {
 });
 
 //gcodes
-$('div#sendG button#txtinput, div#sendG a').on('click', function() {    
+$('div#sendG button#txtinput, div#sendG a').on('click', function() {
     var code;
     if (this.nodeName === 'BUTTON') {
         code = $('input#gInput').val().toUpperCase();
@@ -363,7 +380,7 @@ $('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
     }
 });
 
-//Messages 
+//Messages
 $("div#messages button#clearLog").on('click', function(){
     message('clear', '');
 });
@@ -383,7 +400,7 @@ function loadSettings() {
     $('div#settings input#layerHeight').val(storage.get('settings', 'layerHeight').toString().toString())
     storage.get('settings', 'halfz')==1?$('div#settings input#halfz').prop('checked', true):$('div#settings input#halfz').prop('checked', false);
     storage.get('settings', 'noOK')==1?$('div#messages input#noOK').prop('checked', true):$('div#messages input#noOK').prop('checked', false);
-    
+
     $('div#bedTemperature ul').html('<li class="divider"></li><li><a href="#" id="addBedTemp">Add Temp</a></li>');
     $('div#headTemperature ul').html('<li class="divider"></li><li><a href="#" id="addHeadTemp">Add Temp</a></li>');
     storage.get('temps', 'bed').forEach(function(item){
@@ -404,12 +421,12 @@ function saveSettings() {
     var zwas = storage.get('settings', 'halfz');
     storage.set('settings.pollDelay', parseInt($('div#settings input#pollDelay').val()));
     storage.set('settings.layerHeight', parseFloat($('div#settings input#layerHeight').val()));
-    $('div#settings input#halfz').is(':checked')?storage.set('settings.halfz','1'):storage.set('settings.halfz','0');  
+    $('div#settings input#halfz').is(':checked')?storage.set('settings.halfz','1'):storage.set('settings.halfz','0');
     $('div#settings input#noOK').is(':checked')?storage.set('settings.noOk','1'):storage.set('settings.noOK','0');
     if (zwas !== storage.get('settings', 'halfz')) {
         $('div#Zminus, div#Zplus').text('');
         moveVals(['Z']);
-    } 
+    }
 }
 
 function moveVals(axis) {
@@ -456,7 +473,7 @@ function fileDrop() {
                 handleFileDrop(file[0].data, file[0].name, "config");
         }
     });
-    
+
     $('#ulReprapHTM').fileDrop({
         decodeBase64: true,
         removeDataUriScheme: true,
@@ -479,7 +496,7 @@ function handleFileDrop(data, fName, action) {
 	switch (action) {
 		case "config":
 			uploadFile(action, fName, sysDir + fName, "");
-			break;       
+			break;
 		case "htm":
 			switch(ext) {
 				case "js":
@@ -500,8 +517,8 @@ function handleFileDrop(data, fName, action) {
 				default:
 					uploadFile(action, fName, webDir + fName, "");
 					break;
-			}					
-			break;              
+			}
+			break;
 		case "upload":
 			uploadFile(action, fName, gcodeDir + fName, "");
 			break;
@@ -603,7 +620,7 @@ function uploadLoop(action, fileToPrint) { //Web Printing/Uploading
 			$('span#ulTitle').text(gFilename + " Upload Failed!");
 			$('span#ulProgressText').text("ERROR!");
 			$('div#modal button#modalClose').removeClass('hidden');
-			message("info", gFilename + " Upload Failed!");     
+			message("info", gFilename + " Upload Failed!");
 		}
 		else {
 			var duration = (timer() - timerStart).toHHMMSS();
@@ -619,13 +636,13 @@ function uploadLoop(action, fileToPrint) { //Web Printing/Uploading
 					{
 						$('span#ulTitle').text(gFilename + " uploaded " + getFileLength() + " in " + duration);
 						$('div#modal button#modalClose').removeClass('hidden');
-						message("info", gFilename + " Upload Complete in " + duration);     
+						message("info", gFilename + " Upload Complete in " + duration);
 					}
 					break;
 				case "config":
 					$.askElle("gcode", "M503"); //update config.g on setting view
 					// no break
-				case "htm":    
+				case "htm":
 					$('span#ulTitle').text(gFilename + " uploaded " + getFileLength() + " in " + duration);
 					$('div#modal button#modalClose').removeClass('hidden');
 					message("info", gFilename + " Upload Complete in "+ duration);
@@ -650,7 +667,7 @@ function uploadLoop(action, fileToPrint) { //Web Printing/Uploading
 			if (ubuff >= 200) {
 				wait = 1;
 			}
-		}	
+		}
 		setProgress(progress, "ul", 0, 0);
 		setTimeout(function() {
 			uploadLoop(action, fileToPrint);
@@ -675,10 +692,10 @@ function webSend(action) { //Web Printing/Uploading
 				expansionFactor = chunk.length/chunkSize;
 			}
         }
-		
+
         var resp = $.askElle('upload_data', line); //send chunk of gcodes or html, and get buffer response
 		expansionFactor = (0.875 * expansionFactor) + (0.125 * (line.length/(gFileIndex - startIndex)));
-        
+
         if (typeof resp != 'undefined') {
             ubuff = resp.ubuff;
         } else {
@@ -762,7 +779,7 @@ function enableButtons(which) {
             break;
         case "sendG":
             $('div#sendG button, div#sendG a, input#gInput').removeClass('disabled');
-            break;            
+            break;
     }
 }
 
@@ -786,7 +803,7 @@ function message(type, text) {
 function parseResponse(res) {
     switch (true) {
         case res.indexOf('Debugging enabled') >= 0:
-            message('info', '<strong>M111</strong><br />' + res.replace(/\n/g, "<br />"));    
+            message('info', '<strong>M111</strong><br />' + res.replace(/\n/g, "<br />"));
             break;
         case res.indexOf('Firmware') >= 0:
             var strt = res.indexOf("SION:") +5 ;
@@ -798,7 +815,7 @@ function parseResponse(res) {
             $.askElle("gcode", "M105");
             break;
         case res.indexOf('M550') >= 0:
-            message('info', '<strong>M503</strong><br />' + res.replace(/\n/g, "<br />")); 
+            message('info', '<strong>M503</strong><br />' + res.replace(/\n/g, "<br />"));
             $('div#config').html("<span class='col-md-9'><br/><strong>Config.g File Contents:</strong></span>");
             res.split(/\n/g).forEach(function(item) {
                 $('div#config').append("<span class='alert-info col-md-9'>" + item + "</span><br />");
@@ -819,7 +836,7 @@ function parseResponse(res) {
 function homedWarning(x,y,z) {
     if ((x+y+z) < 3) {
         $('span#warning').text('*some axes are not homed');
-    } else {    
+    } else {
         $('span#warning').text('');
     }
     x===0?$('button#homeX').removeClass('btn-primary').addClass('btn-warning'):$('button#homeX').removeClass('btn-warning').addClass('btn-primary');
@@ -941,9 +958,9 @@ function estEndTime() {
         var startAt = (layerData.length > 5) ? layerData.length - 5 : 0;
         var avg5 = (layerData[layerData.length - 1] - layerData[startAt])/(layerData.length - startAt);
         var avg5R = new Date(utime + (avg5 * layerLeft));
-        $('span#avg5R').text((avg5 * layerLeft).toHHMMSS()); 
-        $('span#avg5').text(avg5R.toLocaleTimeString()); 
-	}	
+        $('span#avg5R').text((avg5 * layerLeft).toHHMMSS());
+        $('span#avg5').text(avg5R.toLocaleTimeString());
+	}
 	if (objTotalFilament > 0) {
 		objUsedFilament = getFilamentUsed();
 		if (objUsedFilament <= objTotalFilament) {
@@ -1112,3 +1129,125 @@ Number.prototype.toHHMMSS = function() {
     minutes=='00'?m="":m=minutes+"m ";
     return h+m+seconds + 's';
 };
+
+
+//Apply user settings from settings.js. Will override all kinds of other stuff.
+function user_settings()
+{
+  //Add quick command buttons
+  if(typeof quickcommands!=="undefined")
+  {
+    for(var qc in quickcommands)
+    {
+      var new_qc=document.createElement("a");
+
+      new_qc.setAttribute("href", "#");
+      new_qc.setAttribute("role", "button");
+      new_qc.setAttribute("class", "btn btn-default disabled");
+
+      var title=quickcommands[qc]["title"];
+      var gcode=quickcommands[qc]["gcode"];
+      var name=quickcommands[qc]["name"];
+
+      if(title!==undefined) new_qc.setAttribute("title", title);
+
+      if(name===undefined)
+      {
+        //If no "name" is given, use gcode as button label (as the defaults do)
+        new_qc.innerHTML=gcode;
+      }
+      else
+      {
+        new_qc.setAttribute("itemprop",gcode);
+        new_qc.innerHTML=name;
+      }
+      $("td#quick_commands").append(new_qc);
+    }
+  }
+
+  if(typeof tempPresets!=="undefined")
+  {
+    //Head and bed temps, override any other values
+    var headtemps = tempPresets["head"];
+    if(headtemps!==undefined)
+    {
+      //Remove any existing values from dropdown
+      $("div#headTemperature ul.dropdown-menu li:has(a#headTempLink)").remove();
+      //Iterate backwards to add them in order specified
+      for(var i=headtemps.length-1;i>=0;i--)
+      {
+        var newLI=document.createElement("li");
+        var newA=document.createElement("a");
+        newA.setAttribute("href","#");
+        newA.setAttribute("id","headTempLink");
+        newA.innerHTML=headtemps[i];
+        newLI.appendChild(newA);
+        $("div#headTemperature ul.dropdown-menu").prepend(newLI);
+      }
+    }
+
+    var bedtemps = tempPresets["bed"];
+    if(bedtemps!==undefined)
+    {
+      //Remove any existing values from dropdown
+      $("div#bedTemperature ul.dropdown-menu li:has(a#bedTempLink)").remove();
+      //Iterate backwards to add them in order specified
+      for(var i=bedtemps.length-1;i>=0;i--)
+      {
+        var newLI=document.createElement("li");
+        var newA=document.createElement("a");
+        newA.setAttribute("href","#");
+        newA.setAttribute("id","bedTempLink");
+        newA.innerHTML=bedtemps[i];
+        newLI.appendChild(newA);
+        $("div#bedTemperature ul.dropdown-menu").prepend(newLI);
+      }
+    }
+  }
+
+  if(typeof feedRates!==undefined)
+  {
+    //Remove existing feed rates
+    //$("div.btn-group#speed label").remove();
+    for(var i in feedRates)
+    {
+      var newLabel=document.createElement("label");
+      var newInput=document.createElement("input");
+
+      if(i==0)
+      {
+        newLabel.setAttribute("class","btn btn-default active disabled");
+      }
+      else
+      {
+        newLabel.setAttribute("class","btn btn-default disabled");
+      }
+      newInput.setAttribute("type","radio");
+      newInput.setAttribute("name", "speed");
+      newInput.setAttribute("id", "speed");
+      newInput.setAttribute("value", feedRates[i]);
+      if(i==0) newInput.setAttribute("checked","");
+      newLabel.appendChild(newInput);
+      newLabel.appendChild(document.createTextNode(feedRates[i]));
+      $("div.btn-group#speed").append(newLabel);
+    }
+  }
+
+
+  if(typeof feedLengths!==undefined)
+  {
+    //Remove existing feed rates
+    $("div.btn-group#feed button").remove();
+    for(var i in feedLengths)
+    {
+      var newButton=document.createElement("button");
+
+      newButton.setAttribute("type","button");
+      newButton.setAttribute("class","btn btn-default disabled");
+      newButton.setAttribute("id", "feed");
+      newButton.setAttribute("value", feedLengths[i]);
+      newButton.appendChild(document.createTextNode(feedLengths[i]+"mm"));
+      $("div.btn-group#feed").append(newButton);
+    }
+  }
+}
