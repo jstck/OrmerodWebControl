@@ -1219,7 +1219,7 @@ function user_settings()
     if(bedtemps!==undefined)
     {
       //Remove any existing values from dropdown
-      $("div#bedTemperature ul.dropdown-menu li:has(a#bedTempLink)").remove();
+        $("div#bedTemperature ul.dropdown-menu li:has(a#bedTempLink)").remove();
       //Iterate backwards to add them in order specified
       for(var i=bedtemps.length-1;i>=0;i--)
       {
@@ -1265,8 +1265,8 @@ function user_settings()
 
   if(typeof feedLengths!==undefined)
   {
-    //Remove existing feed rates
-    $("div.btn-group#feed button").remove();
+    //Remove existing feed lengths
+    //$("div.btn-group#feed button").remove();
     for(var i in feedLengths)
     {
       var newButton=document.createElement("button");
