@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Ormerod Control v0.95</title>
+<title>Ormerod Control v0.96</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
@@ -76,15 +76,9 @@ data-toggle="dropdown">
 <div class="col-md-1">
 <button type="button" id="connect" class="btn btn-danger disabled" value="0">Connect</button>   
 <div id="panicBtn" style="margin-top: 5px">
-<button type="button" value='M112' id='stop'
-class="btn btn-danger btn-block disabled" 
-title="M112, moves in progress are immediately terminated, shuts down, motors/heaters turned off. Requires reset button on duet to restart">STOP!</button>
-<button type="button" value='M25' id='pause' 
-class="btn btn-info btn-block disabled" 
-title='Pause printing, Resumeable'>Pause</button>
-<button type="button" value='reset' id='reset' 
-class="btn btn-success btn-block hidden" 
-title='Pause before reset'>Reset</button>      
+<button type="button" value='M112' id='stop' class="btn btn-danger btn-block disabled" title="M112, moves in progress are immediately terminated, shuts down, motors/heaters turned off. Requires a reset to restart">STOP!</button>
+<button type="button" value='M25' id='pause' class="btn btn-info btn-block disabled" title='Pause printing, Resumeable'>Pause</button>
+<button type="button" value='reset' id='reset' class="btn btn-success btn-block hidden" title='Pause before reset'>Reset</button>      
 </div>
 </div>                    
 <div class="col-md-6">
@@ -144,15 +138,15 @@ title='Pause before reset'>Reset</button>
 </div>
 <div class="col-md-5">    
 <!-- head pos -->
-<table class="table table-bordered" id="headPos">
+<table class="table table-bordered">
 <tbody>
 <tr><th colspan="5" class="text-center">Head Position</th></tr>
 <tr>
 <th class="text-center" width="18%">X</th>
 <th class="text-center" width="18%">Y</th>
 <th class="text-center" width="18%">Z</th>
-<th class="text-center" width="23%"><small>Extrude</small></th>
-<th class="text-center" width="23%"><small>Zprobe</small></th>
+<th class="text-center" width="23%">Extruders</th>
+<th class="text-center" width="23%">Zprobe</th>
 </tr>
 <tr>
 <td class="text-center"><span id="Xpos">0</span></td>
@@ -235,6 +229,17 @@ class="btn btn-primary center-block disabled">Home Z
 </tr>                        
 </tbody>
 </table>
+<!-- Quick Commands -->
+<table class="table table-bordered" id='quicks'>
+<tr><td>
+<p><strong>Quick Commands</strong></p>
+<a href="#" role="button" class="btn btn-primary disabled" title='Disables stepper motors and allows axes to move freely' itemprop="M18">Motors Off</a>
+<a href="#" role="button" class="btn btn-default disabled" title="Set Absolute Z zero">G92 Z0</a>
+<a href="#" role="button" class="btn btn-default disabled" title="Move X & Y axes to zero" itemprop="G1 X0 Y0 F4000">G1 X0 Y0</a>
+<a href="#" role="button" class="btn btn-default disabled" title="Move Z axis to zero" itemprop="G1 Z0 F100">G1 Z0</a>
+<a href="#" role="button" class="btn btn-default disabled" title="Move X & Y to Bed Centre" itemprop="G1 X100 Y100 F4000">G1 X100 Y100</a>
+</td></tr>
+</table>
 </div>
 <div class="col-md-4">
 <!-- Extruder control -->
@@ -245,16 +250,16 @@ class="btn btn-primary center-block disabled">Home Z
 </tr>
 <tr>
 <td>
-<span>Feed mm/min</span>
+<span>Feed mm/sec</span>
 <div class="btn-group" data-toggle="buttons" id='speed'>
 <label class="btn btn-default active disabled">
-<input type="radio" name="speed" id="speed" value="60" checked>60
+<input type="radio" name="speed" id="speed" value="60" checked>1
 </label>
 <label class="btn btn-default disabled">
-<input type="radio" name="speed" id="speed" value="120">120
+<input type="radio" name="speed" id="speed" value="300">5
 </label>
 <label class="btn btn-default disabled">
-<input type="radio" name="speed" id="speed" value="240">240
+<input type="radio" name="speed" id="speed" value="3000">50
 </label>
 </div>
 </td>
@@ -279,33 +284,15 @@ value="1">1mm</button>
 <button type="button" class="btn btn-default disabled" id="feed" 
 value="5">5mm</button>
 <button type="button" class="btn btn-default disabled" id="feed" 
-value="10">10mm</button>
-<button type="button" class="btn btn-default disabled" id="feed" 
-value="50">50mm</button>
+value="20">20mm</button>
 <button type="button" class="btn btn-default disabled" id="feed" 
 value="100">100mm</button>
+<button type="button" class="btn btn-default disabled" id="feed" 
+value="400">400mm</button>
 </div>
 </td>
 </tr>
 </tbody>
-</table>
-</div>
-<div class="col-md-12" id="quicks">
-<!-- Quick Commands -->
-<table class="table table-bordered">
-<tr><td>
-<p><strong>Quick Commands</strong></p>
-<a href="#" role="button" class="btn btn-primary disabled" itemprop="M18" 
-title='Disables stepper motors and allows axes to move freely'>Motors Off</a>
-<a href="#" role="button" class="btn btn-default disabled" 
-title="Set Absolute Z zero">G92 Z0</a>
-<a href="#" role="button" class="btn btn-default disabled" 
-title="Move X & Y axes to zero">G1 X0 Y0 F6000</a>
-<a href="#" role="button" class="btn btn-default disabled" 
-title="Move Z axis to zero">G1 Z0</a>
-<a href="#" role="button" class="btn btn-default disabled" 
-title="Move X & Y to Bed Centre">G1 X100 Y100 F6000</a>
-</td></tr>
 </table>
 </div>
 </div>

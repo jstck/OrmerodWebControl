@@ -1,6 +1,6 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.95; //App version
+var ver = 0.96; //App version
 var polling = false; 
 var printing = false;
 var paused = false;
@@ -104,7 +104,7 @@ $(document).ready(function() {
     });
 
     message('success', 'Page Load Complete');
-    $('button#connect, button#printing').removeClass('disabled');
+    $('button#connect').removeClass('disabled');
     
     var htmVer = getHTMLver();
     $('p#htmVer').text(htmVer);
@@ -209,7 +209,7 @@ $('div#sendG button#txtinput, div#sendG a').on('click', function() {
     }
     $.askElle('gcode', code); //send gcode
 });
-$('div#quicks').on('click', 'a', function() {
+$('table#quicks').on('click', 'a', function() {
     var code;
     if (this.attributes.itemprop) {
         code = this.attributes.itemprop.value;
@@ -233,7 +233,7 @@ $('table#moveHead').on('click', 'button', function() {
     } else {
         var value = $(this).text();
 
-        var feedRate = " F2000";
+        var feedRate = " F4000";
         if (value.indexOf("Z") >= 0)
             feedRate = " F200";
 
@@ -734,8 +734,8 @@ function listGFiles() {
                 break;
         }
         if(jQuery.inArray(item, macroGs) >= 0) {
-            if (!$('div#quicks a[itemprop="M23 '+item+'\nM24"]').text()) {
-                $('div#quicks td:eq(0)').append('<a href="#" role="button" class="btn btn-default disabled" itemprop="M23 '+item+'\nM24" id="quickgfile">'+item+'</a>');
+            if (!$('table#quicks a[itemprop="M23 '+item+'\nM24"]').text()) {
+                $('table#quicks td:eq(0)').append('<a href="#" role="button" class="btn btn-default disabled" itemprop="M23 '+item+'\nM24" id="quickgfile">'+item+'</a>');
             }
         }
         $('div#' + list).append('<div id="gFileLink" class="file-button"><table style="width:100%"><tbody><tr><td style="width:90%;word-break:break-all"><span id="fileName">'
@@ -754,7 +754,7 @@ function getFileName(filename) {
 function disableButtons(which) {
     switch (which) {
         case "head":
-            $('table#moveHead button, table#extruder button, table#extruder label, div#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').addClass('disabled');
+            $('table#moveHead button, table#extruder button, table#extruder label, table#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').addClass('disabled');
             break;
 		case "temp":
            $('table#temp button').addClass('disabled');
@@ -775,7 +775,7 @@ function disableButtons(which) {
 function enableButtons(which) {
     switch (which) {
         case "head":
-            $('table#moveHead button, table#extruder button, table#extruder label, div#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').removeClass('disabled');
+            $('table#moveHead button, table#extruder button, table#extruder label, table#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').removeClass('disabled');
             break;
         case "temp":
             $('table#temp button').removeClass('disabled');
@@ -940,7 +940,14 @@ function updatePage() {
         $('span#Xpos').text(status.pos[0]);
         $('span#Ypos').text(status.pos[1]);
         $('span#Zpos').text(status.pos[2]);
-        $('span#Epos').text(status.extr[0]);
+		var ePosText = "";
+		for(var i=0; i < status.extr.length; ++i) {
+			if (i != 0) {
+				ePosText += ",";
+			}
+			ePosText += status.extr[i];
+		}
+        $('span#Epos').text(ePosText);
         $('span#probe').text(status.probe);
 
         //Temp chart stuff
