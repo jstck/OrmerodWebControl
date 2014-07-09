@@ -16,13 +16,19 @@ var quickCommands = [
 //Presets for bed and head temperatures in dropdowns. These will override whatever
 //is stored in cookies
 var tempPresets={
-  "bed": [100,90,60,0],
-  "head": [245,185,111,0]
+  "bed": [100,90,60,40,0],
+  "head": [245,185,0]
 }
 
 //Values for the feed rates
 //var feedRates=[50,150,500];
-//var feedLengths=[1,3,12,48,192];
+//var feedLengths=[1,5,10,50,100];
 
-var feedRates=[17];
-var feedLengths=[77];
+var feedRates=[150,300,600];
+//var feedLengths=[3];
+
+//Wether or not to clear existing feed rates, feed lengths, and quick commands upon existence of
+//user defined ones
+var feedRates_cleardefaults = true;
+var feedLengths_cleardefaults = false;
+var quickCommands_cleardefaults = false;
