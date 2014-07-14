@@ -287,6 +287,7 @@ $('div#panicBtn button').on('click', function() {
             //switch off heaters
             $.askElle('gcode', "M140 S0"); //bed off
             $.askElle('gcode', "G10 P1 S0\nT1"); //head 1 off
+            $.askElle('gcode', "G10 P2 S0\nT1"); //head 1 off
             resetLayerData(0, 0);
 			//no break
         case "M24":
