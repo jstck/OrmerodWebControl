@@ -184,34 +184,22 @@ $('div#bedTemperature ul').on('click', 'a#addBedTemp', function() {
     var tempVal = $('input#bedTempInput').val();
     if (tempVal != "") {
         var temps = storage.get('temps', 'bed');
-        temps.unshift(parseInt(tempVal));
-        storage.set('temps.bed', temps);
-        loadSettings();
+		var newTemp = parseInt(tempVal);
+		if (temps.indexOf(newTemp) < 0) {
+			temps.push(new Temp);
+			temps.sort(function(a, b){return b-a});
+			storage.set('temps.bed', temps);
+			loadSettings();
+		}
     }else{
         modalMessage("Error Adding Bed Temp!", "You must enter a Temperature to add it to the dropdown list", close);
     }
 });
 $('div#head1Temperature ul').on('click', 'a#addHead1Temp', function() {
-    var tempVal = $('input#head1TempInput').val();
-    if (tempVal != "") {
-        var temps = storage.get('temps', 'head');
-        temps.unshift(parseInt(tempVal));
-        storage.set('temps.head', temps);
-        loadSettings();
-    }else{
-        modalMessage("Error Adding Head Temp!", "You must enter a Temperature to add it to the dropdown list", close);
-    }
+    addHeadTemp($('input#head1TempInput').val());
 });
 $('div#head2Temperature ul').on('click', 'a#addHead2Temp', function() {
-    var tempVal = $('input#head2TempInput').val();
-    if (tempVal != "") {
-        var temps = storage.get('temps', 'head');
-        temps.unshift(parseInt(tempVal));
-        storage.set('temps.head', temps);
-        loadSettings();
-    }else{
-        modalMessage("Error Adding Head Temp!", "You must enter a Temperature to add it to the dropdown list", close);
-    }
+    addHeadTemp($('input#head2TempInput').val());
 });
 
 //feed controls
@@ -421,6 +409,21 @@ $('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
 $("div#messages button#clearLog").on('click', function(){
     message('clear', '');
 });
+
+function addHeadTemp(tempVal) {
+    if (tempVal != "") {
+        var temps = storage.get('temps', 'head');
+		var newTemp = parseInt(tempVal);
+		if (temps.indexOf(newTemp) < 0) {
+			temps.push(newTemp);
+			temps.sort(function(a, b){return b-a});
+			storage.set('temps.head', temps);
+			loadSettings();
+		}
+    }else{
+        modalMessage("Error Adding Head Temp!", "You must enter a Temperature to add it to the dropdown list", close);
+    }
+}
 
 function getCookies() {
     //if none use defaults here, probably move them elsewhere at some point!
