@@ -1,7 +1,7 @@
 /*! Reprap Ormerod Web Control | by Matt Burnett <matt@burny.co.uk>. | open license
  */
-var ver = 0.95; //App version
-var polling = false;
+var ver = 0.97; //App version
+var polling = false; 
 var printing = false;
 var paused = false;
 var chart,chart2,ormerodIP,layerCount,currentLayer,objHeight,objTotalFilament,startingFilamentPos,objUsedFilament,printStartTime,gFilename,ubuff,currentFilamentPos,timerStart,storage,layerHeight,lastUpdatedTime;
@@ -12,12 +12,13 @@ var messageSeqId = 0;
 
 //Temp/Layer Chart settings
 var maxDataPoints = 200;
-var chartData = [[], []];
+var chartData = [[], [], []];
 var maxLayerBars = 100;
 var layerData = [];
 var filamentData = [];
 var bedColour = "#454BFF"; //blue
-var headColour = "#FC2D2D"; //red
+var head1Colour = "#FC2D2D"; //red
+var head2Colour = "#00A000"; //green
 
 var gFileData = "";
 var gFileIndex = 0;
@@ -88,17 +89,19 @@ $(document).ready(function() {
 
     //fill chart with dummy data
     for (var i = 0; i < maxDataPoints; i++) {
-        chartData[0].push([i, 20]);
+        chartData[0].push([i, 0]);
         chartData[1].push([i, 10]);
+        chartData[2].push([i, 20]);
     }
 
     //chart line colours
     $('#bedTxt').css("color", bedColour);
-    $('#headTxt').css("color", headColour);
+    $('#head1Txt').css("color", head1Colour);
+    $('#head2Txt').css("color", head2Colour);
 
     chart = $.plot("#tempchart", chartData, {
         series: {shadowSize: 0},
-        colors: [bedColour, headColour],
+        colors: [bedColour, head1Colour, head2Colour],
         yaxis: {min: -20, max: 280},
         xaxis: {show: false},
         grid: {
@@ -162,12 +165,19 @@ $('div#bedTemperature').on('click', 'a#bedTempLink', function() {
     $('input#bedTempInput').val($(this).text());
     $.askElle('gcode', "M140 S" + $(this).text());
 });
-$('div#headTemperature button#setHeadTemp').on('click', function() {
-        $.askElle('gcode', "G10 P1 S" + $('input#headTempInput').val() + "\nT1");
+$('div#head1Temperature button#setHead1Temp').on('click', function() {
+        $.askElle('gcode', "G10 P1 S" + $('input#head1TempInput').val() + "\nT1");
 });
-$('div#headTemperature').on('click', 'a#headTempLink', function() {
-    $('input#headTempInput').val($(this).text());
+$('div#head2Temperature button#setHead2Temp').on('click', function() {
+        $.askElle('gcode', "G10 P2 S" + $('input#head2TempInput').val() + "\nT2");
+});
+$('div#head1Temperature').on('click', 'a#head1TempLink', function() {
+    $('input#head1TempInput').val($(this).text());
     $.askElle('gcode', "G10 P1 S" + $(this).text() + "\nT1");
+});
+$('div#head2Temperature').on('click', 'a#head2TempLink', function() {
+    $('input#head2TempInput').val($(this).text());
+    $.askElle('gcode', "G10 P2 S" + $(this).text() + "\nT1");
 });
 $('input#bedTempInput').keydown(function(event) {
     if (event.which === 13) {
@@ -175,10 +185,16 @@ $('input#bedTempInput').keydown(function(event) {
         $.askElle('gcode', "M140 S" + $(this).val());
     }
 });
-$('input#headTempInput').keydown(function(event) {
+$('input#head1TempInput').keydown(function(event) {
     if (event.which === 13) {
         event.preventDefault();
         $.askElle('gcode', "G10 P1 S" + $(this).val() + "\nT1");
+    }
+});
+$('input#head2TempInput').keydown(function(event) {
+    if (event.which === 13) {
+        event.preventDefault();
+        $.askElle('gcode', "G10 P2 S" + $(this).val() + "\nT2");
     }
 });
 $('div#bedTemperature ul').on('click', 'a#addBedTemp', function() {
@@ -192,8 +208,19 @@ $('div#bedTemperature ul').on('click', 'a#addBedTemp', function() {
         modalMessage("Error Adding Bed Temp!", "You must enter a Temperature to add it to the dropdown list", close);
     }
 });
-$('div#headTemperature ul').on('click', 'a#addHeadTemp', function() {
-    var tempVal = $('input#headTempInput').val();
+$('div#head1Temperature ul').on('click', 'a#addHead1Temp', function() {
+    var tempVal = $('input#head1TempInput').val();
+    if (tempVal != "") {
+        var temps = storage.get('temps', 'head');
+        temps.unshift(parseInt(tempVal));
+        storage.set('temps.head', temps);
+        loadSettings();
+    }else{
+        modalMessage("Error Adding Head Temp!", "You must enter a Temperature to add it to the dropdown list", close);
+    }
+});
+$('div#head2Temperature ul').on('click', 'a#addHead2Temp', function() {
+    var tempVal = $('input#head2TempInput').val();
     if (tempVal != "") {
         var temps = storage.get('temps', 'head');
         temps.unshift(parseInt(tempVal));
@@ -226,7 +253,7 @@ $('div#sendG button#txtinput, div#sendG a').on('click', function() {
     }
     $.askElle('gcode', code); //send gcode
 });
-$('div#quicks').on('click', 'a', function() {
+$('table#quicks').on('click', 'a', function() {
     var code;
     if (this.attributes.itemprop) {
         code = this.attributes.itemprop.value;
@@ -250,7 +277,7 @@ $('table#moveHead').on('click', 'button', function() {
     } else {
         var value = $(this).text();
 
-        var feedRate = " F2000";
+        var feedRate = " F4000";
         if (value.indexOf("Z") >= 0)
             feedRate = " F200";
 
@@ -277,6 +304,7 @@ $('div#panicBtn button').on('click', function() {
             //switch off heaters
             $.askElle('gcode', "M140 S0"); //bed off
             $.askElle('gcode', "G10 P1 S0\nT1"); //head 1 off
+            $.askElle('gcode', "G10 P2 S0\nT1"); //head 1 off
             resetLayerData(0, 0);
 			//no break
         case "M24":
@@ -428,12 +456,14 @@ function loadSettings() {
     storage.get('settings', 'noOK')==1?$('div#messages input#noOK').prop('checked', true):$('div#messages input#noOK').prop('checked', false);
 
     $('div#bedTemperature ul').html('<li class="divider"></li><li><a href="#" id="addBedTemp">Add Temp</a></li>');
-    $('div#headTemperature ul').html('<li class="divider"></li><li><a href="#" id="addHeadTemp">Add Temp</a></li>');
+    $('div#head1Temperature ul').html('<li class="divider"></li><li><a href="#" id="addHead1Temp">Add Temp</a></li>');
+    $('div#head2Temperature ul').html('<li class="divider"></li><li><a href="#" id="addHead2Temp">Add Temp</a></li>');
     storage.get('temps', 'bed').forEach(function(item){
         $('div#bedTemperature ul').prepend('<li><a href="#" id="bedTempLink">'+item+'</a></li>');
     });
     storage.get('temps', 'head').forEach(function(item){
-        $('div#headTemperature ul').prepend('<li><a href="#" id="headTempLink">'+item+'</a></li>');
+        $('div#head1Temperature ul').prepend('<li><a href="#" id="head1TempLink">'+item+'</a></li>');
+        $('div#head2Temperature ul').prepend('<li><a href="#" id="head2TempLink">'+item+'</a></li>');
     });
 }
 
@@ -751,8 +781,8 @@ function listGFiles() {
                 break;
         }
         if(jQuery.inArray(item, macroGs) >= 0) {
-            if (!$('div#quicks a[itemprop="M23 '+item+'\nM24"]').text()) {
-                $('div#quicks td:eq(0)').append('<a href="#" role="button" class="btn btn-default disabled" itemprop="M23 '+item+'\nM24" id="quickgfile">'+item+'</a>');
+            if (!$('table#quicks a[itemprop="M23 '+item+'\nM24"]').text()) {
+                $('table#quicks td:eq(0)').append('<a href="#" role="button" class="btn btn-default disabled" itemprop="M23 '+item+'\nM24" id="quickgfile">'+item+'</a>');
             }
         }
         $('div#' + list).append('<div id="gFileLink" class="file-button"><table style="width:100%"><tbody><tr><td style="width:90%;word-break:break-all"><span id="fileName">'
@@ -771,7 +801,7 @@ function getFileName(filename) {
 function disableButtons(which) {
     switch (which) {
         case "head":
-            $('table#moveHead button, table#extruder button, table#extruder label, div#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').addClass('disabled');
+            $('table#moveHead button, table#extruder button, table#extruder label, table#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').addClass('disabled');
             break;
 		case "temp":
            $('table#temp button').addClass('disabled');
@@ -792,7 +822,7 @@ function disableButtons(which) {
 function enableButtons(which) {
     switch (which) {
         case "head":
-            $('table#moveHead button, table#extruder button, table#extruder label, div#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').removeClass('disabled');
+            $('table#moveHead button, table#extruder button, table#extruder label, table#quicks a, button#uploadGfile, button#ulConfigG, button#ulReprapHTM, button#uploadPrintGfile').removeClass('disabled');
             break;
         case "temp":
             $('table#temp button').removeClass('disabled');
@@ -953,16 +983,25 @@ function updatePage() {
         }
 
         $('span#bedTemp').text(status.heaters[0]);
-        $('span#headTemp').text(status.heaters[1]);
+        $('span#head1Temp').text(status.heaters[1]);
+		$('span#head2Temp').text((status.heaters.length >= 3) ? status.heaters[2] : 0);
         $('span#Xpos').text(status.pos[0]);
         $('span#Ypos').text(status.pos[1]);
         $('span#Zpos').text(status.pos[2]);
-        $('span#Epos').text(status.extr[0]);
+		var ePosText = "";
+		for(var i=0; i < status.extr.length; ++i) {
+			if (i != 0) {
+				ePosText += ",";
+			}
+			ePosText += status.extr[i];
+		}
+        $('span#Epos').text(ePosText);
         $('span#probe').text(status.probe);
 
         //Temp chart stuff
         chartData[0].push(parseFloat(status.heaters[0]));
         chartData[1].push(parseFloat(status.heaters[1]));
+        chartData[2].push((status.heaters.length >= 3) ? parseFloat(status.heaters[2]) : 0);
         chart.setData(parseChartData());
         chart.draw();
     }
@@ -1113,10 +1152,13 @@ function parseChartData() {
         chartData[0].shift();
     if (chartData[1].length > maxDataPoints)
         chartData[1].shift();
-    var res = [[], []];
+    if (chartData[2].length > maxDataPoints)
+        chartData[2].shift();
+    var res = [[], [], []];
     for (var i = 0; i < chartData[0].length; ++i) {
         res[0].push([i, chartData[0][i]]);
         res[1].push([i, chartData[1][i]]);
+        res[2].push([i, chartData[2][i]]);
     }
     return res;
 }
