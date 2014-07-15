@@ -32,3 +32,7 @@ var feedRates=[150,300,600];
 var feedRates_cleardefaults = true;
 var feedLengths_cleardefaults = false;
 var quickCommands_cleardefaults = false;
+
+//Override colors for temperature graph
+var bedColour = "#E6AB09"; //kapton-coloured
+var headColour = "#800080"; //purple
