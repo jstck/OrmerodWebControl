@@ -32,6 +32,8 @@ var webDir = "www/";
 var sysDir = "sys/";
 
 //Default values for various values that can be overridden in settings.js
+
+//Quick command buttons
 var quickCommands = [];
 
 //Temperature presets for bed and head temp. If defined, will override cookies
@@ -40,9 +42,12 @@ var tempPresets = {
 //  "head": [245,185,0]
 }
 
+var feedRates_cleardefaults = false;
+var feedLengths_cleardefaults = false;
+
 //Values for the feed rates
-var feedRates = [60,120,240];
-var feedLengths = [1,5,10,50,100];
+var feedRates = [];
+var feedLengths = [];
 
 
 jQuery.extend({
@@ -66,6 +71,7 @@ jQuery.extend({
 				break;
         }
         var url = '//' + ormerodIP + '/rr_'+reqType+query;
+        //console.log("AskElle: r: " + reqType + " c: " + code + " ;; " + url);
         $.ajax(url, {async:false,dataType:"json",success:function(data){result = data;}});
         return result;
     }
@@ -1206,9 +1212,11 @@ Number.prototype.toHHMMSS = function() {
 function user_settings()
 {
   //Add quick command buttons
-  if(typeof quickcommands!=="undefined")
+  if(typeof quickCommands!=="undefined")
   {
-    for(var qc in quickcommands)
+    if(quickCommands_cleardefaults)
+      $("td#quick_commands a.btn").remove();
+    for(var qc in quickCommands)
     {
       var new_qc=document.createElement("a");
 
@@ -1216,9 +1224,9 @@ function user_settings()
       new_qc.setAttribute("role", "button");
       new_qc.setAttribute("class", "btn btn-default disabled");
 
-      var title=quickcommands[qc]["title"];
-      var gcode=quickcommands[qc]["gcode"];
-      var name=quickcommands[qc]["name"];
+      var title=quickCommands[qc]["title"];
+      var gcode=quickCommands[qc]["gcode"];
+      var name=quickCommands[qc]["name"];
 
       if(title!==undefined) new_qc.setAttribute("title", title);
 
@@ -1279,15 +1287,18 @@ function user_settings()
   if(typeof feedRates!==undefined)
   {
     //Remove existing feed rates
-    //$("div.btn-group#speed label").remove();
+    if(feedRates_cleardefaults)
+      $("div.btn-group#speed label").remove();
+
     for(var i in feedRates)
     {
       var newLabel=document.createElement("label");
       var newInput=document.createElement("input");
 
-      if(i==0)
+      if(i==0 && feedRates_cleardefaults)
       {
         newLabel.setAttribute("class","btn btn-default active disabled");
+        newInput.setAttribute("checked","");
       }
       else
       {
@@ -1297,7 +1308,6 @@ function user_settings()
       newInput.setAttribute("name", "speed");
       newInput.setAttribute("id", "speed");
       newInput.setAttribute("value", feedRates[i]);
-      if(i==0) newInput.setAttribute("checked","");
       newLabel.appendChild(newInput);
       newLabel.appendChild(document.createTextNode(feedRates[i]));
       $("div.btn-group#speed").append(newLabel);
@@ -1307,18 +1317,35 @@ function user_settings()
 
   if(typeof feedLengths!==undefined)
   {
+    //Copy the click handler function reference from the first existing button
+    //as those have already been defined
+    var onclick_handler=$("div.btn-group#feed button")[0].click;
     //Remove existing feed lengths
-    //$("div.btn-group#feed button").remove();
+    if(feedLengths_cleardefaults)
+      $("div.btn-group#feed button").remove();
     for(var i in feedLengths)
     {
       var newButton=document.createElement("button");
 
       newButton.setAttribute("type","button");
       newButton.setAttribute("class","btn btn-default disabled");
-      newButton.setAttribute("id", "feed");
+      newButton.setAttribute("id", "feed_new");
       newButton.setAttribute("value", feedLengths[i]);
       newButton.appendChild(document.createTextNode(feedLengths[i]+"mm"));
       $("div.btn-group#feed").append(newButton);
     }
+
+    //Reapply click handler to all existing buttons
+    //$('div#feed button#feed_new').on('click', onclick_handler);
+    $('div#feed button#feed_new').on('click', function() {
+        var amount = $(this).val();
+        var dir = "";
+        if ($('input[name="feeddir"]:checked').attr('id') == "reverse") {
+            dir = "-";
+        }
+        var feedRate = " F" + $('input[name="speed"]:checked').val();
+        var code = "M120\nM83\nG1 E" + dir + amount + feedRate + "\nM121";
+        $.askElle('gcode', code);
+    });
   }
 }
