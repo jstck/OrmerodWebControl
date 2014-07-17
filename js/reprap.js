@@ -193,7 +193,7 @@ $('div#bedTemperature ul').on('click', 'a#addBedTemp', function() {
         var temps = storage.get('temps', 'bed');
 		var newTemp = parseInt(tempVal);
 		if (temps.indexOf(newTemp) < 0) {
-			temps.push(new Temp);
+			temps.push(newTemp);
 			temps.sort(function(a, b){return b-a});
 			storage.set('temps.bed', temps);
 			loadSettings();
